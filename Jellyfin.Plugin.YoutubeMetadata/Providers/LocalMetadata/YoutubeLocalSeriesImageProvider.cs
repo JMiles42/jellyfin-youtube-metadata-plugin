@@ -48,7 +48,7 @@ public class YoutubeLocalSeriesImageProvider : ILocalImageProvider {
         _logger.LogDebug("YTLocalImageSeries GetImages: {Name}", item.Name);
         var list = new List<LocalImageInfo>();
         string jpgPath = GetSeriesInfo(item.Path);
-        if (String.IsNullOrEmpty(jpgPath)) {
+        if (string.IsNullOrEmpty(jpgPath)) {
             return list;
         }
         var localimg = new LocalImageInfo();

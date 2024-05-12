@@ -40,7 +40,7 @@ public class YoutubeLocalSeriesProvider : ILocalMetadataProvider<Series>, IHasIt
         _logger.LogDebug("YTLocalSeries GetMetadata: {Path}", info.Path);
         MetadataResult<Series> result = new();
         string infoPath = GetSeriesInfo(info.Path);
-        if (String.IsNullOrEmpty(infoPath)) {
+        if (string.IsNullOrEmpty(infoPath)) {
             return Task.FromResult(result);
         }
         var infoJson = Utils.ReadYTDLInfo(infoPath, cancellationToken);
@@ -60,7 +60,7 @@ public class YoutubeLocalSeriesProvider : ILocalMetadataProvider<Series>, IHasIt
         _logger.LogDebug("YTLocalSeries HasChanged: {Path}", item.Path);
         var infoPath = GetSeriesInfo(item.Path);
         var result = false;
-        if (!String.IsNullOrEmpty(infoPath)) {
+        if (!string.IsNullOrEmpty(infoPath)) {
             var infoJson = GetInfoJson(infoPath);
             result = infoJson.Exists && _fileSystem.GetLastWriteTimeUtc(infoJson) < item.DateLastSaved;
         }

@@ -12,12 +12,13 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using Jellyfin.Data.Enums;
 
 namespace Jellyfin.Plugin.YoutubeMetadata;
 
-public class Utils {
+public static class Utils {
     public static bool IsFresh(MediaBrowser.Model.IO.FileSystemMetadata fileInfo) {
-        if (fileInfo.Exists && DateTime.UtcNow.Subtract(fileInfo.LastWriteTimeUtc).Days <= 10) {
+        if (fileInfo.Exists && (DateTime.UtcNow.Subtract(fileInfo.LastWriteTimeUtc).Days <= 10)) {
             return true;
         }
 
@@ -37,20 +38,38 @@ public class Utils {
         return match.Value;
     }
 
-    /// <summary>
-    /// Creates a person object of type director for the provided name.
-    /// </summary>
-    /// <param name="name"></param>
-    /// <param name="channel_id"></param>
-    /// <returns></returns>
-    public static PersonInfo CreatePerson(string name, string channel_id, string personType = PersonType.Director) {
+    /// <summary> 
+    /// Creates a person object of type director for the provided name. 
+    /// </summary> 
+    /// <param name="name"></param> 
+    /// <param name="channel_id"></param> 
+    /// <returns></returns> 
+    public static PersonInfo CreatePerson(string name, string channel_id, PersonKind personKind) {
         return new() {
             Name = name,
-            Type = personType,
+            Type = personKind,
             ProviderIds = new() {
-                        { Constants.ProviderId, channel_id }
-                },
+                { Constants.ProviderId, channel_id },
+            },
         };
+    }
+
+    public static void AddPersonIfValid<T>(this MetadataResult<T> result,
+                                           string                 name,
+                                           string                 channel_id,
+                                           PersonKind             personKind)
+    {
+        if (string.IsNullOrEmpty(name))
+        {
+            return;
+        }
+
+        if (string.IsNullOrEmpty(channel_id))
+        {
+            return;
+        }
+
+        result.AddPerson(CreatePerson(name, channel_id, personKind));
     }
 
     /// <summary>
@@ -59,15 +78,12 @@ public class Utils {
     /// <param name="appPaths"></param>
     /// <param name="youtubeID"></param>
     /// <returns></returns>
-    public static string GetVideoInfoPath(IServerApplicationPaths appPaths, string youtubeID) {
-        var dataPath = Path.Combine(appPaths.CachePath, "youtubemetadata", youtubeID);
-        return Path.Combine(dataPath, "ytvideo.info.json");
-    }
+    public static string GetVideoInfoPath(IServerApplicationPaths appPaths, string youtubeID) => Path.Combine(appPaths.CachePath, "youtubemetadata", youtubeID, "ytvideo.info.json");
 
     public static async Task<string> SearchChannel(string query, IServerApplicationPaths appPaths, CancellationToken cancellationToken) {
         cancellationToken.ThrowIfCancellationRequested();
         var ytd = new YoutubeDLP();
-        var url = String.Format(Constants.SearchQuery, System.Web.HttpUtility.UrlEncode(query));
+        var url = string.Format(Constants.SearchQuery, System.Web.HttpUtility.UrlEncode(query));
         ytd.Options.VerbositySimulationOptions.Simulate = true;
         ytd.Options.GeneralOptions.FlatPlaylist = true;
         ytd.Options.VideoSelectionOptions.PlaylistItems = "1";
@@ -83,8 +99,8 @@ public class Utils {
         var task = ytd.DownloadAsync(url);
         await task;
         if (ytdl_out.Count > 0) {
-            Uri uri = new Uri(ytdl_out[0]);
-            return uri.Segments[uri.Segments.Length - 1];
+            var uri = new Uri(ytdl_out[0]);
+            return uri.Segments[^1];
         }
         else {
             return null;
@@ -104,7 +120,7 @@ public class Utils {
         }
         await task;
 
-        foreach (string err in ytdl_errs) {
+        foreach (var err in ytdl_errs) {
             var match = Regex.Match(err, @".*The playlist does not exist\..*");
             if (match.Success) {
                 return false;
@@ -125,7 +141,7 @@ public class Utils {
         }
         List<string> ytdl_errs = new();
         ytd.StandardErrorEvent += (sender, error) => ytdl_errs.Add(error);
-        var task = ytd.DownloadAsync(String.Format(Constants.ChannelUrl, id));
+        var task = ytd.DownloadAsync(string.Format(Constants.ChannelUrl, id));
         await task;
     }
     public static async Task YTDLMetadata(string id, IServerApplicationPaths appPaths, CancellationToken cancellationToken) {
@@ -156,7 +172,7 @@ public class Utils {
     /// <returns></returns>
     public static YTDLData ReadYTDLInfo(string fpath, CancellationToken cancellationToken) {
         cancellationToken.ThrowIfCancellationRequested();
-        string jsonString = File.ReadAllText(fpath);
+        var jsonString = File.ReadAllText(fpath);
         return JsonSerializer.Deserialize<YTDLData>(jsonString);
     }
 
@@ -182,8 +198,12 @@ public class Utils {
         }
         result.Item.ProductionYear = date.Year;
         result.Item.PremiereDate = date;
-        result.AddPerson(CreatePerson(json.uploader, json.channel_id));
-        result.AddPerson(CreatePerson(json.uploader, json.channel_id, PersonType.Actor));
+
+        if (!string.IsNullOrWhiteSpace(json.uploader)) {
+            result.AddPersonIfValid(json.uploader, json.channel_id, PersonKind.Director);
+            result.AddPersonIfValid(json.uploader, json.channel_id, PersonKind.Actor);
+        }
+
         return result;
     }
 
@@ -198,7 +218,7 @@ public class Utils {
             HasMetadata = true,
             Item = item
         };
-        result.Item.Name = String.IsNullOrEmpty(json.track) ? json.title : json.track;
+        result.Item.Name = string.IsNullOrEmpty(json.track) ? json.title : json.track;
         result.Item.Artists = new List<string> { json.artist };
         result.Item.Album = json.album;
         result.Item.Overview = json.description;
@@ -211,7 +231,12 @@ public class Utils {
         }
         result.Item.ProductionYear = date.Year;
         result.Item.PremiereDate = date;
-        result.AddPerson(Utils.CreatePerson(json.uploader, json.channel_id));
+
+        if (!string.IsNullOrWhiteSpace(json.uploader)) {
+            result.AddPersonIfValid(json.uploader, json.channel_id, PersonKind.Director);
+            result.AddPersonIfValid(json.uploader, json.channel_id, PersonKind.Actor);
+        }
+
         return result;
     }
 
@@ -224,7 +249,7 @@ public class Utils {
         var item = new Episode();
         var result = new MetadataResult<Episode> {
             HasMetadata = true,
-            Item = item
+            Item = item,
         };
         result.Item.Name = json.title;
         result.Item.Overview = json.description;
@@ -235,10 +260,17 @@ public class Utils {
         catch {
 
         }
+
         result.Item.ProductionYear = date.Year;
-        result.Item.PremiereDate = date;
+        result.Item.PremiereDate   = date;
         result.Item.ForcedSortName = date.ToString("yyyyMMdd") + "-" + result.Item.Name;
-        result.AddPerson(Utils.CreatePerson(json.uploader, json.channel_id));
+
+        if (!string.IsNullOrWhiteSpace(json.uploader)) {
+            result.Item.SeriesName     = json.uploader;
+            result.AddPersonIfValid(json.uploader, json.channel_id, PersonKind.Director);
+            result.AddPersonIfValid(json.uploader, json.channel_id, PersonKind.Actor);
+        }
+
         result.Item.IndexNumber = 1;
         result.Item.ParentIndexNumber = 1;
         return result;
@@ -252,7 +284,7 @@ public class Utils {
         var item = new Series();
         var result = new MetadataResult<Series> {
             HasMetadata = true,
-            Item = item
+            Item = item,
         };
         result.Item.Name = json.uploader;
         result.Item.Overview = json.description;
