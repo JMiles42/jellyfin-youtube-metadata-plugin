@@ -51,10 +51,10 @@ public class YoutubeLocalImageProvider : ILocalImageProvider, IHasOrder {
         _logger.LogDebug("YTLocalImage GetImages: {Name}", item.Name);
         var list = new List<LocalImageInfo>();
         string jpgPath = GetSeriesInfo(item.ContainingFolderPath);
-        if (String.IsNullOrEmpty(jpgPath)) {
+        if (string.IsNullOrEmpty(jpgPath)) {
             return list;
         }
-        if (String.IsNullOrEmpty(jpgPath)) {
+        if (string.IsNullOrEmpty(jpgPath)) {
             return list;
         }
         var localimg = new LocalImageInfo();

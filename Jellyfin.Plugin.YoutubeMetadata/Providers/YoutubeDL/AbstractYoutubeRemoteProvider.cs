@@ -107,7 +107,7 @@ public abstract class AbstractYoutubeRemoteProvider<B, T, E> : IRemoteMetadataPr
     public YTDLData ReadYTDLInfo(string fpath, CancellationToken cancellationToken) {
         _logger.LogDebug("YTDL ReadYTDLInfo: {Path}", fpath);
         cancellationToken.ThrowIfCancellationRequested();
-        string jsonString = _afs.File.ReadAllText(fpath);
+        var jsonString = _afs.File.ReadAllText(fpath);
         var json = JsonSerializer.Deserialize<YTDLData>(jsonString);
         return json;
     }
@@ -116,11 +116,13 @@ public abstract class AbstractYoutubeRemoteProvider<B, T, E> : IRemoteMetadataPr
         _logger.LogDebug("YTDL GetMetadata: {Path}", info.Path);
         MetadataResult<T> result = new();
         var id = GetYTID(info.Path);
+
         if (string.IsNullOrWhiteSpace(id)) {
             _logger.LogInformation("YTDL GetMetadata: Youtube ID not found in filename of title: {info.Name}", info.Name);
             result.HasMetadata = false;
             return result;
         }
+
         var ytPath = GetVideoInfoPath(this._config.ApplicationPaths, id);
         var fileInfo = _fileSystem.GetFileSystemInfo(ytPath);
         if (!IsFresh(fileInfo)) {

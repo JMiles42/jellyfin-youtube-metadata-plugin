@@ -36,17 +36,18 @@ public abstract class AbstractYoutubeLocalProvider<B, T> : ILocalMetadataProvide
         var file = _fileSystem.GetFileInfo(specificFile);
 
         if (file.Exists) {
-            _logger.LogInformation("Found info file of the same name as containing folder {FileName}", file.Name);
+            _logger.LogDebug("Found info file named the same as the containing folder {FileName}", file.Name);
             return file;
         }
 
         var infoFiles = files.Where(a => a.Name.EndsWith(".info.json")).ToArray();
 
         if (infoFiles.Length == 1) {
-            _logger.LogInformation("Found info file {FileName} within {Directory}", infoFiles[0].Name, directoryPath);
+            _logger.LogDebug("Found info file {FileName} within {Directory}", infoFiles[0].Name, directoryPath);
             return infoFiles[0];
         }
-        _logger.LogInformation("No .info.json Found in {Directory}", directoryPath);
+
+        _logger.LogInformation("Found a total of {Total} .info.json found in {Directory}", infoFiles.Length, directoryPath);
 
         return file;
     }
@@ -81,7 +82,7 @@ public abstract class AbstractYoutubeLocalProvider<B, T> : ILocalMetadataProvide
             return Task.FromResult(result);
         }
         var jsonObj = Utils.ReadYTDLInfo(infoFile.FullName, cancellationToken);
-        _logger.LogDebug("YTLocal GetMetadata Result: {JSON}", jsonObj.ToString());
+        _logger.LogDebug("YTLocal GetMetadata Result: {Json}", jsonObj.ToString());
         result = this.GetMetadataImpl(jsonObj);
 
         return Task.FromResult(result);
