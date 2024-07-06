@@ -35,7 +35,7 @@
   
   <Target Name="Zip" AfterTargets="PostBuildEvent">
     <ItemGroup>
-      <FilesToDelete Include="$(BaseOutputPath)Jellyfin.SmartPlaylist*.zip" />
+      <FilesToDelete Include="$(BaseOutputPath)Jellyfin.YoutubeMetadata*.zip" />
       <TempZipDirectory Include="$(OutputPath)output" />
     </ItemGroup>
     <Delete Files="@(FilesToDelete)" />
@@ -46,7 +46,7 @@
     <Copy SourceFiles="$(OutputPath)TestableIO.System.IO.Abstractions.dll" DestinationFolder="@(TempZipDirectory)" />
     <Copy SourceFiles="$(OutputPath)TestableIO.System.IO.Abstractions.Wrappers.dll" DestinationFolder="@(TempZipDirectory)" />
     <Copy SourceFiles="$(OutputPath)\meta.json" DestinationFolder="@(TempZipDirectory)" />
-    <ZipDirectory SourceDirectory="@(TempZipDirectory)" DestinationFile="$(BaseOutputPath)Jellyfin.SmartPlaylist@v$(Version).zip" />
+    <ZipDirectory SourceDirectory="@(TempZipDirectory)" DestinationFile="$(BaseOutputPath)Jellyfin.YoutubeMetadata@v$(Version).zip" />
     <RemoveDir Directories="@(TempZipDirectory)" />
   </Target>
 </Project>
