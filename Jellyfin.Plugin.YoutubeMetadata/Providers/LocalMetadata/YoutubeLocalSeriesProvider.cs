@@ -4,7 +4,6 @@ using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.IO;
 using Microsoft.Extensions.FileSystemGlobbing;
 using Microsoft.Extensions.Logging;
-using System;
 using System.IO;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -12,23 +11,28 @@ using System.Threading.Tasks;
 
 namespace Jellyfin.Plugin.YoutubeMetadata.Providers.LocalMetadata;
 
-public class YoutubeLocalSeriesProvider : ILocalMetadataProvider<Series>, IHasItemChangeMonitor {
+public class YoutubeLocalSeriesProvider : ILocalMetadataProvider<Series>, IHasItemChangeMonitor
+{
     protected readonly ILogger<YoutubeLocalSeriesProvider> _logger;
     protected readonly IFileSystem _fileSystem;
-    public YoutubeLocalSeriesProvider(IFileSystem fileSystem, ILogger<YoutubeLocalSeriesProvider> logger) {
+    public YoutubeLocalSeriesProvider(IFileSystem fileSystem, ILogger<YoutubeLocalSeriesProvider> logger)
+    {
         _fileSystem = fileSystem;
         _logger = logger;
     }
 
     public string Name => Constants.ProviderId;
 
-    private string GetSeriesInfo(string path) {
+    private string GetSeriesInfo(string path)
+    {
         _logger.LogDebug("YTLocalSeries GetSeriesInfo: {Path}", path);
         Matcher matcher = new();
         matcher.AddInclude("**/*.info.json");
         string infoPath = "";
-        foreach (string file in matcher.GetResultsInFullPath(path)) {
-            if (Regex.Match(file, Constants.YTCHANNEL_RE).Success) {
+        foreach (string file in matcher.GetResultsInFullPath(path))
+        {
+            if (Regex.Match(file, Constants.YTCHANNEL_RE).Success)
+            {
                 infoPath = file;
                 break;
             }
@@ -36,11 +40,13 @@ public class YoutubeLocalSeriesProvider : ILocalMetadataProvider<Series>, IHasIt
         _logger.LogDebug("YTLocalSeries GetSeriesInfo Result: {InfoPath}", infoPath);
         return infoPath;
     }
-    public Task<MetadataResult<Series>> GetMetadata(ItemInfo info, IDirectoryService directoryService, CancellationToken cancellationToken) {
+    public Task<MetadataResult<Series>> GetMetadata(ItemInfo info, IDirectoryService directoryService, CancellationToken cancellationToken)
+    {
         _logger.LogDebug("YTLocalSeries GetMetadata: {Path}", info.Path);
         MetadataResult<Series> result = new();
         string infoPath = GetSeriesInfo(info.Path);
-        if (string.IsNullOrEmpty(infoPath)) {
+        if (string.IsNullOrEmpty(infoPath))
+        {
             return Task.FromResult(result);
         }
         var infoJson = Utils.ReadYTDLInfo(infoPath, cancellationToken);
@@ -48,7 +54,8 @@ public class YoutubeLocalSeriesProvider : ILocalMetadataProvider<Series>, IHasIt
         _logger.LogDebug("YTLocalSeries GetMetadata Result: {Result}", result);
         return Task.FromResult(result);
     }
-    FileSystemMetadata GetInfoJson(string path) {
+    FileSystemMetadata GetInfoJson(string path)
+    {
         var fileInfo = _fileSystem.GetFileSystemInfo(path);
         var directoryInfo = fileInfo.IsDirectory ? fileInfo : _fileSystem.GetDirectoryInfo(Path.GetDirectoryName(path));
         var directoryPath = directoryInfo.FullName;
@@ -56,11 +63,13 @@ public class YoutubeLocalSeriesProvider : ILocalMetadataProvider<Series>, IHasIt
         var file = _fileSystem.GetFileInfo(specificFile);
         return file;
     }
-    public bool HasChanged(BaseItem item, IDirectoryService directoryService) {
+    public bool HasChanged(BaseItem item, IDirectoryService directoryService)
+    {
         _logger.LogDebug("YTLocalSeries HasChanged: {Path}", item.Path);
         var infoPath = GetSeriesInfo(item.Path);
         var result = false;
-        if (!string.IsNullOrEmpty(infoPath)) {
+        if (!string.IsNullOrEmpty(infoPath))
+        {
             var infoJson = GetInfoJson(infoPath);
             result = infoJson.Exists && _fileSystem.GetLastWriteTimeUtc(infoJson) < item.DateLastSaved;
         }

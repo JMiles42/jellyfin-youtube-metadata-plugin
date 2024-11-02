@@ -4,6 +4,7 @@ using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Entities.TV;
 using MediaBrowser.Controller.Providers;
+using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.IO;
 using MediaBrowser.Model.Providers;
 using Microsoft.Extensions.Logging;
@@ -12,7 +13,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
 using System.Text.Json;
-using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -20,7 +20,8 @@ namespace Jellyfin.Plugin.YoutubeMetadata.Providers;
 
 public abstract class AbstractYoutubeRemoteProvider<B, T, E> : IRemoteMetadataProvider<T, E>
         where T : BaseItem, IHasLookupInfo<E>
-        where E : ItemLookupInfo, new() {
+        where E : ItemLookupInfo, new()
+{
     protected readonly IServerConfigurationManager _config;
     protected readonly IHttpClientFactory _httpClientFactory;
     protected readonly ILogger<B> _logger;
@@ -31,7 +32,8 @@ public abstract class AbstractYoutubeRemoteProvider<B, T, E> : IRemoteMetadataPr
                                             IHttpClientFactory httpClientFactory,
                                             ILogger<B> logger,
                                             IServerConfigurationManager config,
-                                            System.IO.Abstractions.IFileSystem afs) {
+                                            System.IO.Abstractions.IFileSystem afs)
+    {
         _config = config;
         _fileSystem = fileSystem;
         _httpClientFactory = httpClientFactory;
@@ -45,9 +47,11 @@ public abstract class AbstractYoutubeRemoteProvider<B, T, E> : IRemoteMetadataPr
     /// </summary>
     /// <param name="json"></param>
     /// <returns></returns>
-    public static MetadataResult<Movie> YTDLJsonToMovie(YTDLData json, string id) {
+    public static MetadataResult<Movie> YTDLJsonToMovie(YTDLData json, string id)
+    {
         var result = Utils.YTDLJsonToMovie(json);
-        result.Item.ProviderIds.Add(Constants.ProviderId, id);
+
+        result.Item.TrySetProviderId(Constants.ProviderId, id);
         return result;
     }
 
@@ -56,9 +60,10 @@ public abstract class AbstractYoutubeRemoteProvider<B, T, E> : IRemoteMetadataPr
     /// </summary>
     /// <param name="json"></param>
     /// <returns></returns>
-    public static MetadataResult<MusicVideo> YTDLJsonToMusicVideo(YTDLData json, string id) {
+    public static MetadataResult<MusicVideo> YTDLJsonToMusicVideo(YTDLData json, string id)
+    {
         var result = Utils.YTDLJsonToMusicVideo(json);
-        result.Item.ProviderIds.Add(Constants.ProviderId, id);
+        result.Item.TrySetProviderId(Constants.ProviderId, id);
         return result;
     }
 
@@ -67,13 +72,16 @@ public abstract class AbstractYoutubeRemoteProvider<B, T, E> : IRemoteMetadataPr
     /// </summary>
     /// <param name="json"></param>
     /// <returns></returns>
-    public static MetadataResult<Episode> YTDLJsonToEpisode(YTDLData json, string id) {
+    public static MetadataResult<Episode> YTDLJsonToEpisode(YTDLData json, string id)
+    {
         var result = Utils.YTDLJsonToEpisode(json);
-        result.Item.ProviderIds.Add(Constants.ProviderId, id);
+        result.Item.TrySetProviderId(Constants.ProviderId, id);
         return result;
     }
-    public static bool IsFresh(MediaBrowser.Model.IO.FileSystemMetadata fileInfo) {
-        if (fileInfo.Exists && DateTime.UtcNow.Subtract(fileInfo.LastWriteTimeUtc).Days <= 10) {
+    public static bool IsFresh(MediaBrowser.Model.IO.FileSystemMetadata fileInfo)
+    {
+        if (fileInfo.Exists && DateTime.UtcNow.Subtract(fileInfo.LastWriteTimeUtc).Days <= 10)
+        {
             return true;
         }
         return false;
@@ -83,8 +91,9 @@ public abstract class AbstractYoutubeRemoteProvider<B, T, E> : IRemoteMetadataPr
     /// </summary>
     /// <param name="name"></param>
     /// <returns></returns>
-    public static string GetYTID(string name) {
-        var match = Regex.Match(name, Constants.YTID_RE);
+    public static string GetYTID(string name)
+    {
+        var match = Constants.YoutubeVideoIdRegex.Match(name);
         return match.Value;
     }
     /// <summary>
@@ -93,7 +102,8 @@ public abstract class AbstractYoutubeRemoteProvider<B, T, E> : IRemoteMetadataPr
     /// <param name="appPaths"></param>
     /// <param name="youtubeID"></param>
     /// <returns></returns>
-    public static string GetVideoInfoPath(IServerApplicationPaths appPaths, string youtubeID) {
+    public static string GetVideoInfoPath(IServerApplicationPaths appPaths, string youtubeID)
+    {
         var dataPath = Path.Combine(appPaths.CachePath, "youtubemetadata", youtubeID);
         return Path.Combine(dataPath, "ytvideo.info.json");
     }
@@ -104,7 +114,8 @@ public abstract class AbstractYoutubeRemoteProvider<B, T, E> : IRemoteMetadataPr
     /// <param name="metaFile"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    public YTDLData ReadYTDLInfo(string fpath, CancellationToken cancellationToken) {
+    public YTDLData ReadYTDLInfo(string fpath, CancellationToken cancellationToken)
+    {
         _logger.LogDebug("YTDL ReadYTDLInfo: {Path}", fpath);
         cancellationToken.ThrowIfCancellationRequested();
         var jsonString = _afs.File.ReadAllText(fpath);
@@ -112,12 +123,14 @@ public abstract class AbstractYoutubeRemoteProvider<B, T, E> : IRemoteMetadataPr
         return json;
     }
 
-    public virtual async Task<MetadataResult<T>> GetMetadata(E info, CancellationToken cancellationToken) {
+    public virtual async Task<MetadataResult<T>> GetMetadata(E info, CancellationToken cancellationToken)
+    {
         _logger.LogDebug("YTDL GetMetadata: {Path}", info.Path);
         MetadataResult<T> result = new();
         var id = GetYTID(info.Path);
 
-        if (string.IsNullOrWhiteSpace(id)) {
+        if (string.IsNullOrWhiteSpace(id))
+        {
             _logger.LogInformation("YTDL GetMetadata: Youtube ID not found in filename of title: {info.Name}", info.Name);
             result.HasMetadata = false;
             return result;
@@ -125,18 +138,21 @@ public abstract class AbstractYoutubeRemoteProvider<B, T, E> : IRemoteMetadataPr
 
         var ytPath = GetVideoInfoPath(this._config.ApplicationPaths, id);
         var fileInfo = _fileSystem.GetFileSystemInfo(ytPath);
-        if (!IsFresh(fileInfo)) {
+        if (!IsFresh(fileInfo))
+        {
             _logger.LogDebug("YTDL GetMetadata: Not Fresh: {ID}", id);
             await this.GetAndCacheMetadata(id, this._config.ApplicationPaths, cancellationToken);
         }
         var video = ReadYTDLInfo(ytPath, cancellationToken);
-        if (video != null) {
+        if (video != null)
+        {
             _logger.LogDebug("YTDL GetMetadata: Calling Impl function: {ID}", id);
             result = this.GetMetadataImpl(video, id);
         }
         return result;
     }
-    public Task<IEnumerable<RemoteSearchResult>> GetSearchResults(E searchInfo, CancellationToken cancellationToken) {
+    public Task<IEnumerable<RemoteSearchResult>> GetSearchResults(E searchInfo, CancellationToken cancellationToken)
+    {
         throw new System.NotImplementedException();
     }
 
@@ -144,7 +160,8 @@ public abstract class AbstractYoutubeRemoteProvider<B, T, E> : IRemoteMetadataPr
 
     internal abstract Task GetAndCacheMetadata(string id, IServerApplicationPaths appPaths, CancellationToken cancellationToken);
 
-    public virtual Task<HttpResponseMessage> GetImageResponse(string url, CancellationToken cancellationToken) {
+    public virtual Task<HttpResponseMessage> GetImageResponse(string url, CancellationToken cancellationToken)
+    {
         throw new System.NotImplementedException();
     }
 }

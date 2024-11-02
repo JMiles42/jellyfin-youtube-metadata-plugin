@@ -1,12 +1,12 @@
 {
     "category": "Metadata",
-    "changelog": "Updated to .net 8 and Jellyfin 10.9.0\nimproved finding local info.json files\n",
+    "changelog": "Updated to Jellyfin 10.10.0\nMade changes to support other sites better.\nAdd Tags",
     "description": "Provides YouTube metadata from the YouTube API and Youtube-dlp metadata files.\n",
     "guid": "e1204173-3802-4d53-980e-9d1b851fde84",
     "name": "YouTube Metadata 2 YouTube Horder",
     "overview": "YouTube metadata provider",
     "owner": "JMiles42",
-    "targetAbi": "10.9.0.0",
-    "timestamp": "2024-05-12T11:53:44Z",
-    "version": "1.2.0.0"
+    "targetAbi": "10.10.0.0",
+    "timestamp": "2024-11-03T03:53:44Z",
+    "version": "1.3.0.0"
 }

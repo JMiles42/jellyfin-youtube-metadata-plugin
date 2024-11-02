@@ -5,7 +5,8 @@ using MediaBrowser.Model.Providers;
 
 namespace Jellyfin.Plugin.YoutubeMetadata.Providers.ExternalId;
 
-public class YTSeriesExternalId : IExternalId {
+public class YTSeriesExternalId : IExternalId
+{
     public bool Supports(IHasProviderIds item)
         => item is Series;
 

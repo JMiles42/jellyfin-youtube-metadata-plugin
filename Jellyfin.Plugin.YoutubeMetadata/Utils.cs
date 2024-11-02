@@ -1,4 +1,5 @@
-﻿using MediaBrowser.Controller;
+﻿using Jellyfin.Data.Enums;
+using MediaBrowser.Controller;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Entities.TV;
@@ -12,13 +13,15 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
-using Jellyfin.Data.Enums;
 
 namespace Jellyfin.Plugin.YoutubeMetadata;
 
-public static class Utils {
-    public static bool IsFresh(MediaBrowser.Model.IO.FileSystemMetadata fileInfo) {
-        if (fileInfo.Exists && (DateTime.UtcNow.Subtract(fileInfo.LastWriteTimeUtc).Days <= 10)) {
+public static class Utils
+{
+    public static bool IsFresh(MediaBrowser.Model.IO.FileSystemMetadata fileInfo)
+    {
+        if (fileInfo.Exists && (DateTime.UtcNow.Subtract(fileInfo.LastWriteTimeUtc).Days <= 10))
+        {
             return true;
         }
 
@@ -30,34 +33,37 @@ public static class Utils {
     /// </summary>
     /// <param name="name"></param>
     /// <returns></returns>
-    public static string GetYTID(string name) {
+    public static string GetYTID(string name)
+    {
         var match = Regex.Match(name, Constants.YTID_RE);
-        if (!match.Success) {
+        if (!match.Success)
+        {
             match = Regex.Match(name, Constants.YTCHANNEL_RE);
         }
+
         return match.Value;
     }
 
-    /// <summary> 
-    /// Creates a person object of type director for the provided name. 
-    /// </summary> 
-    /// <param name="name"></param> 
-    /// <param name="channel_id"></param> 
-    /// <returns></returns> 
-    public static PersonInfo CreatePerson(string name, string channel_id, PersonKind personKind) {
-        return new() {
-            Name = name,
-            Type = personKind,
-            ProviderIds = new() {
-                { Constants.ProviderId, channel_id },
-            },
-        };
-    }
+    /// <summary>
+    /// Creates a person object of type director for the provided name.
+    /// </summary>
+    /// <param name="name"></param>
+    /// <param name="channel_id"></param>
+    /// <returns></returns>
+    public static PersonInfo CreatePerson(string name, string channel_id, PersonKind personKind) => new()
+    {
+        Name = name,
+        Type = personKind,
+        ProviderIds = new()
+        {
+            { Constants.ProviderId, channel_id },
+        },
+    };
 
     public static void AddPersonIfValid<T>(this MetadataResult<T> result,
-                                           string                 name,
-                                           string                 channel_id,
-                                           PersonKind             personKind)
+        string? name,
+        string? channel_id,
+        PersonKind personKind)
     {
         if (string.IsNullOrEmpty(name))
         {
@@ -78,9 +84,12 @@ public static class Utils {
     /// <param name="appPaths"></param>
     /// <param name="youtubeID"></param>
     /// <returns></returns>
-    public static string GetVideoInfoPath(IServerApplicationPaths appPaths, string youtubeID) => Path.Combine(appPaths.CachePath, "youtubemetadata", youtubeID, "ytvideo.info.json");
+    public static string GetVideoInfoPath(IServerApplicationPaths appPaths, string youtubeID) =>
+        Path.Combine(appPaths.CachePath, "youtubemetadata", youtubeID, "ytvideo.info.json");
 
-    public static async Task<string> SearchChannel(string query, IServerApplicationPaths appPaths, CancellationToken cancellationToken) {
+    public static async Task<string?> SearchChannel(string query, IServerApplicationPaths appPaths,
+        CancellationToken cancellationToken)
+    {
         cancellationToken.ThrowIfCancellationRequested();
         var ytd = new YoutubeDLP();
         var url = string.Format(Constants.SearchQuery, System.Web.HttpUtility.UrlEncode(query));
@@ -88,47 +97,58 @@ public static class Utils {
         ytd.Options.GeneralOptions.FlatPlaylist = true;
         ytd.Options.VideoSelectionOptions.PlaylistItems = "1";
         ytd.Options.VerbositySimulationOptions.Print = "url";
-        List<string> ytdl_errs = new();
-        List<string> ytdl_out = new();
+        List<string> ytdl_errs = [];
+        List<string> ytdl_out = [];
         ytd.StandardErrorEvent += (sender, error) => ytdl_errs.Add(error);
         ytd.StandardOutputEvent += (sender, output) => ytdl_out.Add(output);
         var cookie_file = Path.Join(appPaths.PluginsPath, "YoutubeMetadata", "cookies.txt");
-        if (File.Exists(cookie_file)) {
+        if (File.Exists(cookie_file))
+        {
             ytd.Options.FilesystemOptions.Cookies = cookie_file;
         }
-        var task = ytd.DownloadAsync(url);
-        await task;
-        if (ytdl_out.Count > 0) {
+
+        await ytd.DownloadAsync(url);
+        if (ytdl_out.Count > 0)
+        {
             var uri = new Uri(ytdl_out[0]);
             return uri.Segments[^1];
         }
-        else {
-            return null;
-        }
+
+        return null;
     }
-    public static async Task<bool> ValidCookie(IServerApplicationPaths appPaths, CancellationToken cancellationToken) {
+
+    public static async Task<bool> ValidCookie(IServerApplicationPaths appPaths, CancellationToken cancellationToken)
+    {
         cancellationToken.ThrowIfCancellationRequested();
         var ytd = new YoutubeDLP();
         var task = ytd.DownloadAsync("https://www.youtube.com/playlist?list=WL");
-        List<string> ytdl_errs = new();
+        List<string> ytdl_errs = [];
         ytd.StandardErrorEvent += (sender, error) => ytdl_errs.Add(error);
         ytd.Options.VideoSelectionOptions.PlaylistItems = "0";
         ytd.Options.VerbositySimulationOptions.SkipDownload = true;
         var cookie_file = Path.Join(appPaths.PluginsPath, "YoutubeMetadata", "cookies.txt");
-        if (File.Exists(cookie_file)) {
+        if (File.Exists(cookie_file))
+        {
             ytd.Options.FilesystemOptions.Cookies = cookie_file;
         }
+
         await task;
 
-        foreach (var err in ytdl_errs) {
+        foreach (var err in ytdl_errs)
+        {
             var match = Regex.Match(err, @".*The playlist does not exist\..*");
-            if (match.Success) {
+            if (match.Success)
+            {
                 return false;
             }
         }
+
         return true;
     }
-    public static async Task GetChannelInfo(string id, string name, IServerApplicationPaths appPaths, CancellationToken cancellationToken) {
+
+    public static async Task GetChannelInfo(string id, string name, IServerApplicationPaths appPaths,
+        CancellationToken cancellationToken)
+    {
         cancellationToken.ThrowIfCancellationRequested();
         var ytd = new YoutubeDLP();
         ytd.Options.VideoSelectionOptions.PlaylistItems = "0";
@@ -136,22 +156,28 @@ public static class Utils {
         var dataPath = Path.Combine(appPaths.CachePath, "youtubemetadata", name, "ytvideo");
         ytd.Options.FilesystemOptions.Output = dataPath;
         var cookie_file = Path.Join(appPaths.PluginsPath, "YoutubeMetadata", "cookies.txt");
-        if (File.Exists(cookie_file)) {
+        if (File.Exists(cookie_file))
+        {
             ytd.Options.FilesystemOptions.Cookies = cookie_file;
         }
-        List<string> ytdl_errs = new();
+
+        List<string> ytdl_errs = [];
         ytd.StandardErrorEvent += (sender, error) => ytdl_errs.Add(error);
         var task = ytd.DownloadAsync(string.Format(Constants.ChannelUrl, id));
         await task;
     }
-    public static async Task YTDLMetadata(string id, IServerApplicationPaths appPaths, CancellationToken cancellationToken) {
+
+    public static async Task YTDLMetadata(string id, IServerApplicationPaths appPaths,
+        CancellationToken cancellationToken)
+    {
         //var foo = await ValidCookie(appPaths, cancellationToken);
         cancellationToken.ThrowIfCancellationRequested();
         var ytd = new YoutubeDLP();
         ytd.Options.FilesystemOptions.WriteInfoJson = true;
         ytd.Options.VerbositySimulationOptions.SkipDownload = true;
         var cookie_file = Path.Join(appPaths.PluginsPath, "YoutubeMetadata", "cookies.txt");
-        if (File.Exists(cookie_file)) {
+        if (File.Exists(cookie_file))
+        {
             ytd.Options.FilesystemOptions.Cookies = cookie_file;
         }
 
@@ -159,18 +185,20 @@ public static class Utils {
         var dataPath = Path.Combine(appPaths.CachePath, "youtubemetadata", id, "ytvideo");
         ytd.Options.FilesystemOptions.Output = dataPath;
 
-        List<string> ytdl_errs = new();
+        List<string> ytdl_errs = [];
         ytd.StandardErrorEvent += (sender, error) => ytdl_errs.Add(error);
         var task = ytd.DownloadAsync(dlstring);
         await task;
     }
+
     /// <summary>
     /// Reads JSON data from file.
     /// </summary>
     /// <param name="metaFile"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    public static YTDLData ReadYTDLInfo(string fpath, CancellationToken cancellationToken) {
+    public static YTDLData ReadYTDLInfo(string fpath, CancellationToken cancellationToken)
+    {
         cancellationToken.ThrowIfCancellationRequested();
         var jsonString = File.ReadAllText(fpath);
         return JsonSerializer.Deserialize<YTDLData>(jsonString);
@@ -181,27 +209,37 @@ public static class Utils {
     /// </summary>
     /// <param name="json"></param>
     /// <returns></returns>
-    public static MetadataResult<Movie> YTDLJsonToMovie(YTDLData json) {
+    public static MetadataResult<Movie> YTDLJsonToMovie(YTDLData json)
+    {
         var item = new Movie();
-        var result = new MetadataResult<Movie> {
+        var result = new MetadataResult<Movie>
+        {
             HasMetadata = true,
             Item = item
         };
-        result.Item.Name = json.title;
-        result.Item.Overview = json.description;
-        var date = new DateTime(1970, 1, 1);
-        try {
-            date = DateTime.ParseExact(json.upload_date, "yyyyMMdd", null);
-        }
-        catch {
+        result.Item.Name = json.Title;
+        result.Item.Overview = json.Description;
+        var date = ParseDate(json.UploadDate);
 
+        if (date.HasValue)
+        {
+            var dt = date.Value;
+            result.Item.ProductionYear = dt.Year;
+            result.Item.PremiereDate = dt;
+            result.Item.ForcedSortName = dt.ToString("yyyyMMdd") + "-" + result.Item.Name;
         }
-        result.Item.ProductionYear = date.Year;
-        result.Item.PremiereDate = date;
+        else
+        {
+            result.Item.ForcedSortName = result.Item.Name;
+        }
 
-        if (!string.IsNullOrWhiteSpace(json.uploader)) {
-            result.AddPersonIfValid(json.uploader, json.channel_id, PersonKind.Director);
-            result.AddPersonIfValid(json.uploader, json.channel_id, PersonKind.Actor);
+        result.Item.Tags = json.Tags.ToArray();
+        result.Item.Genres = json.Categories.ToArray();
+
+        if (!string.IsNullOrWhiteSpace(json.Uploader))
+        {
+            result.AddPersonIfValid(json.Uploader, json.ChannelId ?? json.UploaderId, PersonKind.Director);
+            result.AddPersonIfValid(json.Uploader, json.ChannelId ?? json.UploaderId, PersonKind.Actor);
         }
 
         return result;
@@ -212,29 +250,39 @@ public static class Utils {
     /// </summary>
     /// <param name="json"></param>
     /// <returns></returns>
-    public static MetadataResult<MusicVideo> YTDLJsonToMusicVideo(YTDLData json) {
+    public static MetadataResult<MusicVideo> YTDLJsonToMusicVideo(YTDLData json)
+    {
         var item = new MusicVideo();
-        var result = new MetadataResult<MusicVideo> {
+        var result = new MetadataResult<MusicVideo>
+        {
             HasMetadata = true,
             Item = item
         };
-        result.Item.Name = string.IsNullOrEmpty(json.track) ? json.title : json.track;
-        result.Item.Artists = new List<string> { json.artist };
-        result.Item.Album = json.album;
-        result.Item.Overview = json.description;
-        var date = new DateTime(1970, 1, 1);
-        try {
-            date = DateTime.ParseExact(json.upload_date, "yyyyMMdd", null);
-        }
-        catch {
+        result.Item.Name = string.IsNullOrEmpty(json.Track) ? json.Title : json.Track;
+        result.Item.Artists = [json.Artist,];
+        result.Item.Album = json.Album;
+        result.Item.Overview = json.Description;
+        var date = ParseDate(json.UploadDate);
 
+        if (date.HasValue)
+        {
+            var dt = date.Value;
+            result.Item.ProductionYear = dt.Year;
+            result.Item.PremiereDate = dt;
+            result.Item.ForcedSortName = dt.ToString("yyyyMMdd") + "-" + result.Item.Name;
         }
-        result.Item.ProductionYear = date.Year;
-        result.Item.PremiereDate = date;
+        else
+        {
+            result.Item.ForcedSortName = result.Item.Name;
+        }
 
-        if (!string.IsNullOrWhiteSpace(json.uploader)) {
-            result.AddPersonIfValid(json.uploader, json.channel_id, PersonKind.Director);
-            result.AddPersonIfValid(json.uploader, json.channel_id, PersonKind.Actor);
+        result.Item.Tags = json.Tags.ToArray();
+        result.Item.Genres = json.Categories.ToArray();
+
+        if (!string.IsNullOrWhiteSpace(json.Uploader))
+        {
+            result.AddPersonIfValid(json.Uploader, json.ChannelId ?? json.UploaderId, PersonKind.Director);
+            result.AddPersonIfValid(json.Uploader, json.ChannelId ?? json.UploaderId, PersonKind.Actor);
         }
 
         return result;
@@ -245,50 +293,79 @@ public static class Utils {
     /// </summary>
     /// <param name="json"></param>
     /// <returns></returns>
-    public static MetadataResult<Episode> YTDLJsonToEpisode(YTDLData json) {
+    public static MetadataResult<Episode> YTDLJsonToEpisode(YTDLData json)
+    {
         var item = new Episode();
-        var result = new MetadataResult<Episode> {
+        var result = new MetadataResult<Episode>
+        {
             HasMetadata = true,
             Item = item,
         };
-        result.Item.Name = json.title;
-        result.Item.Overview = json.description;
-        var date = new DateTime(1970, 1, 1);
-        try {
-            date = DateTime.ParseExact(json.upload_date, "yyyyMMdd", null);
-        }
-        catch {
+        result.Item.Name = json.Title;
+        result.Item.Overview = json.Description;
+        var date = ParseDate(json.UploadDate);
 
+        if (date.HasValue)
+        {
+            var dt = date.Value;
+            result.Item.ProductionYear = dt.Year;
+            result.Item.PremiereDate = dt;
+            result.Item.ForcedSortName = dt.ToString("yyyyMMdd") + "-" + result.Item.Name;
+        }
+        else
+        {
+            result.Item.ForcedSortName = result.Item.Name;
         }
 
-        result.Item.ProductionYear = date.Year;
-        result.Item.PremiereDate   = date;
-        result.Item.ForcedSortName = date.ToString("yyyyMMdd") + "-" + result.Item.Name;
-
-        if (!string.IsNullOrWhiteSpace(json.uploader)) {
-            result.Item.SeriesName     = json.uploader;
-            result.AddPersonIfValid(json.uploader, json.channel_id, PersonKind.Director);
-            result.AddPersonIfValid(json.uploader, json.channel_id, PersonKind.Actor);
+        if (!string.IsNullOrWhiteSpace(json.Uploader))
+        {
+            result.Item.SeriesName = json.Uploader;
+            result.AddPersonIfValid(json.Uploader, json.ChannelId ?? json.UploaderId, PersonKind.Director);
+            result.AddPersonIfValid(json.Uploader, json.ChannelId ?? json.UploaderId, PersonKind.Actor);
         }
+
+        result.Item.Tags = json.Tags.ToArray();
+        result.Item.Genres = json.Categories.ToArray();
 
         result.Item.IndexNumber = 1;
         result.Item.ParentIndexNumber = 1;
         return result;
     }
+
     /// <summary>
     /// Provides a MusicVideo Metadata Result from a json object.
     /// </summary>
     /// <param name="json"></param>
     /// <returns></returns>
-    public static MetadataResult<Series> YTDLJsonToSeries(YTDLData json) {
+    public static MetadataResult<Series> YTDLJsonToSeries(YTDLData json)
+    {
         var item = new Series();
-        var result = new MetadataResult<Series> {
+        var result = new MetadataResult<Series>
+        {
             HasMetadata = true,
             Item = item,
         };
-        result.Item.Name = json.uploader;
-        result.Item.Overview = json.description;
-        result.Item.ProviderIds.Add(Constants.ProviderId, json.channel_id);
+        result.Item.Name = json.Uploader;
+        result.Item.Overview = json.Description;
+
+        result.Item.TrySetProviderId(Constants.ProviderId, json.ChannelId ?? json.UploaderId);
         return result;
+    }
+
+    public static DateTime? ParseDate(string? datetime)
+    {
+        if (string.IsNullOrEmpty(datetime))
+        {
+            return null;
+        }
+
+        try
+        {
+            return DateTime.ParseExact(datetime, "yyyyMMdd", null);
+        }
+        catch
+        {
+            return null;
+        }
     }
 }
