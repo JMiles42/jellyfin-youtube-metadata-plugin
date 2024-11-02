@@ -2,7 +2,8 @@
 
 namespace Jellyfin.Plugin.YoutubeMetadata;
 
-public class Constants {
+public class Constants
+{
     public const string PluginName = "YouTube Metadata 2 YH";
     public const string ProviderId = "YoutubeMetadata";
     public const string PluginGuid = "e1204173-3802-4d53-980e-9d1b851fde84";

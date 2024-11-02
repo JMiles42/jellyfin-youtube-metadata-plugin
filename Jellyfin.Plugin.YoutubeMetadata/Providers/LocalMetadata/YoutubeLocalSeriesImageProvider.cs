@@ -1,20 +1,21 @@
-﻿using System.Collections.Generic;
-using MediaBrowser.Controller.Providers;
-using MediaBrowser.Controller.Entities;
-using MediaBrowser.Model.IO;
-using Microsoft.Extensions.Logging;
+﻿using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.TV;
+using MediaBrowser.Controller.Providers;
+using MediaBrowser.Model.IO;
 using Microsoft.Extensions.FileSystemGlobbing;
-using System;
+using Microsoft.Extensions.Logging;
+using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
 namespace Jellyfin.Plugin.YoutubeMetadata.Providers.LocalMetadata;
 
-public class YoutubeLocalSeriesImageProvider : ILocalImageProvider {
+public class YoutubeLocalSeriesImageProvider : ILocalImageProvider
+{
     private readonly IFileSystem _fileSystem;
     private readonly ILogger<YoutubeLocalImageProvider> _logger;
 
-    public YoutubeLocalSeriesImageProvider(IFileSystem fileSystem, ILogger<YoutubeLocalImageProvider> logger) {
+    public YoutubeLocalSeriesImageProvider(IFileSystem fileSystem, ILogger<YoutubeLocalImageProvider> logger)
+    {
         _fileSystem = fileSystem;
         _logger = logger;
     }
@@ -23,14 +24,17 @@ public class YoutubeLocalSeriesImageProvider : ILocalImageProvider {
     /// Providers name, this does not appear in the library metadata settings.
     /// </summary>
     public string Name => Constants.ProviderId;
-    private string GetSeriesInfo(string path) {
+    private string GetSeriesInfo(string path)
+    {
         _logger.LogDebug("YTLocalImageSeries GetSeriesInfo: {Path}", path);
         Matcher matcher = new();
         matcher.AddInclude("**/*.jpg");
         matcher.AddInclude("**/*.webp");
         string infoPath = "";
-        foreach (string file in matcher.GetResultsInFullPath(path)) {
-            if (Regex.Match(file, Constants.YTCHANNEL_RE).Success) {
+        foreach (string file in matcher.GetResultsInFullPath(path))
+        {
+            if (Regex.Match(file, Constants.YTCHANNEL_RE).Success)
+            {
                 infoPath = file;
                 break;
             }
@@ -44,11 +48,13 @@ public class YoutubeLocalSeriesImageProvider : ILocalImageProvider {
     /// <param name="item"></param>
     /// <param name="directoryService"></param>
     /// <returns></returns>
-    public IEnumerable<LocalImageInfo> GetImages(BaseItem item, IDirectoryService directoryService) {
+    public IEnumerable<LocalImageInfo> GetImages(BaseItem item, IDirectoryService directoryService)
+    {
         _logger.LogDebug("YTLocalImageSeries GetImages: {Name}", item.Name);
         var list = new List<LocalImageInfo>();
         string jpgPath = GetSeriesInfo(item.Path);
-        if (string.IsNullOrEmpty(jpgPath)) {
+        if (string.IsNullOrEmpty(jpgPath))
+        {
             return list;
         }
         var localimg = new LocalImageInfo();

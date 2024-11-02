@@ -1,18 +1,19 @@
-﻿using System.Collections.Generic;
-using System.Net.Http;
-using System.Threading;
-using System.Threading.Tasks;
-using MediaBrowser.Controller.Configuration;
+﻿using MediaBrowser.Controller.Configuration;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.IO;
 using MediaBrowser.Model.Providers;
 using Microsoft.Extensions.Logging;
+using System.Collections.Generic;
+using System.Net.Http;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Jellyfin.Plugin.YoutubeMetadata.Providers;
 
-public abstract class AbstractYoutubeImageRemoteProvider<B> : IRemoteImageProvider, IHasOrder {
+public abstract class AbstractYoutubeImageRemoteProvider<B> : IRemoteImageProvider, IHasOrder
+{
     protected readonly IServerConfigurationManager _config;
     protected readonly ILogger<B> _logger;
     protected readonly IFileSystem _fileSystem;
@@ -22,7 +23,8 @@ public abstract class AbstractYoutubeImageRemoteProvider<B> : IRemoteImageProvid
                                               ILogger<B> logger,
                                               IServerConfigurationManager config,
                                               IHttpClientFactory httpClientFactory,
-                                              System.IO.Abstractions.IFileSystem afs) {
+                                              System.IO.Abstractions.IFileSystem afs)
+    {
         _config = config;
         _fileSystem = fileSystem;
         _httpClientFactory = httpClientFactory;
@@ -38,7 +40,8 @@ public abstract class AbstractYoutubeImageRemoteProvider<B> : IRemoteImageProvid
     /// <param name="url"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    public async Task<HttpResponseMessage> GetImageResponse(string url, CancellationToken cancellationToken) {
+    public async Task<HttpResponseMessage> GetImageResponse(string url, CancellationToken cancellationToken)
+    {
         _logger.LogDebug("YTDLRemoteImage GetImageResponse: {URL}", url);
         var httpClient = _httpClientFactory.CreateClient();
         return await httpClient.GetAsync(url, cancellationToken).ConfigureAwait(false);

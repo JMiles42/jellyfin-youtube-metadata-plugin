@@ -12,14 +12,16 @@ using System.Threading.Tasks;
 
 namespace Jellyfin.Plugin.YoutubeMetadata;
 
-public class EpisodeIndexer : ILibraryPostScanTask, IScheduledTask {
+public class EpisodeIndexer : ILibraryPostScanTask, IScheduledTask
+{
     protected readonly ILibraryManager _libmanager;
     protected readonly IItemRepository _repository;
     protected readonly ILogger<EpisodeIndexer> _logger;
     public EpisodeIndexer(
             ILibraryManager libmanager,
             IItemRepository repository,
-            ILogger<EpisodeIndexer> logger) {
+            ILogger<EpisodeIndexer> logger)
+    {
         _libmanager = libmanager;
         _repository = repository;
         _logger = logger;
@@ -33,81 +35,103 @@ public class EpisodeIndexer : ILibraryPostScanTask, IScheduledTask {
 
     public string Category => Constants.PluginName;
 
-    public async Task ExecuteAsync(IProgress<double> progress, CancellationToken cancellationToken) {
+    public async Task ExecuteAsync(IProgress<double> progress, CancellationToken cancellationToken)
+    {
         await Run(progress, cancellationToken);
         return;
     }
 
-    public async Task Execute(IProgress<double> progress, CancellationToken cancellationToken) {
+    public async Task Execute(IProgress<double> progress, CancellationToken cancellationToken)
+    {
         await Run(progress, cancellationToken);
         return;
     }
 
-    public IEnumerable<TaskTriggerInfo> GetDefaultTriggers() {
-        return new[]
-        {
-                new TaskTriggerInfo { Type = TaskTriggerInfo.TriggerInterval, IntervalTicks = TimeSpan.FromHours(24).Ticks }
-        };
+    public IEnumerable<TaskTriggerInfo> GetDefaultTriggers()
+    {
+        return
+        [
+            new TaskTriggerInfo { Type = TaskTriggerInfo.TriggerInterval, IntervalTicks = TimeSpan.FromHours(24).Ticks },
+        ];
     }
 
-    public async Task Run(IProgress<double> progress, CancellationToken cancellationToken) {
+    public async Task Run(IProgress<double> progress, CancellationToken cancellationToken)
+    {
         _logger.LogDebug("Starting Reindexing episodes");
-        var shows = _repository.GetItems(new InternalItemsQuery {
+        var shows = _repository.GetItems(new InternalItemsQuery
+        {
             Recursive = true,
-            IncludeItemTypes = new[] { BaseItemKind.Series },
+            IncludeItemTypes = [BaseItemKind.Series,]
+           ,
             DtoOptions = new DtoOptions()
         });
 
         var count = 0;
-        foreach (var show in shows.Items) {
-            if (!show.ProviderIds.ContainsKey(Constants.ProviderId)) {
+        foreach (var show in shows.Items)
+        {
+            if (!show.ProviderIds.ContainsKey(Constants.ProviderId))
+            {
                 _logger.LogDebug("Skipping show {Name}", show.Name);
                 continue;
             }
 
             _logger.LogDebug("Indexing show {Name}", show.Name);
-            var seasons = new List<BaseItem>(_repository.GetItems(new InternalItemsQuery {
+            var seasons = new List<BaseItem>(_repository.GetItems(new InternalItemsQuery
+            {
                 ParentId = show.Id,
-                IncludeItemTypes = new[] { BaseItemKind.Season },
+                IncludeItemTypes = [BaseItemKind.Season,]
+               ,
                 DtoOptions = new DtoOptions()
             }).Items);
 
-            seasons.Sort(delegate (BaseItem x, BaseItem y) {
-                if (x.Name == null && y.Name == null) {
+            seasons.Sort(delegate (BaseItem x, BaseItem y)
+            {
+                if (x.Name == null && y.Name == null)
+                {
                     return 0;
                 }
 
-                if (x.Name == null) {
+                if (x.Name == null)
+                {
                     return -1;
                 }
 
-                if (y.Name == null) {
+                if (y.Name == null)
+                {
                     return 1;
                 }
 
                 return x.Name.CompareTo(y.Name);
             });
             var sindex = 1;
-            foreach (var season in seasons) {
+            foreach (var season in seasons)
+            {
                 season.IndexNumber = sindex;
                 _logger.LogDebug("Indexing season {Name} as index {Index}", season.Name, sindex);
                 await _libmanager.UpdateItemAsync(season, show, ItemUpdateType.MetadataEdit, cancellationToken);
-                var episodes = new List<BaseItem>(_repository.GetItems(new InternalItemsQuery {
-                    AncestorIds = new[] { season.Id },
-                    IncludeItemTypes = new[] { BaseItemKind.Episode },
+                var episodes = new List<BaseItem>(_repository.GetItems(new InternalItemsQuery
+                {
+                    AncestorIds = [season.Id,]
+                   ,
+                    IncludeItemTypes = [BaseItemKind.Episode,]
+                   ,
                     DtoOptions = new DtoOptions()
                 }).Items);
-                episodes.Sort(delegate (BaseItem x, BaseItem y) {
-                    if (!x.PremiereDate.HasValue && !y.PremiereDate.HasValue) {
+                episodes.Sort(delegate (BaseItem x, BaseItem y)
+                {
+                    if (!x.PremiereDate.HasValue && !y.PremiereDate.HasValue)
+                    {
                         _logger.LogWarning("Episode [{Name}] does not have 'PremiereDate'", x.FileNameWithoutExtension);
                         _logger.LogWarning("Episode [{Name}] does not have 'PremiereDate'", y.FileNameWithoutExtension);
                         return 0;
                     }
-                    if (!x.PremiereDate.HasValue) {
+                    if (!x.PremiereDate.HasValue)
+                    {
                         _logger.LogWarning("Episode [{Name}] does not have 'PremiereDate'", x.FileNameWithoutExtension);
                         return -1;
                     }
-                    if (!y.PremiereDate.HasValue) {
+                    if (!y.PremiereDate.HasValue)
+                    {
                         _logger.LogWarning("Episode [{Name}] does not have 'PremiereDate'", y.FileNameWithoutExtension);
                         return 1;
                     }
@@ -115,11 +139,14 @@ public class EpisodeIndexer : ILibraryPostScanTask, IScheduledTask {
                     return DateTime.Compare(x.PremiereDate.Value, y.PremiereDate.Value);
                 });
                 var eindex = 1;
-                foreach (var episode in episodes) {
-                    if (episode.PremiereDate.HasValue) {
+                foreach (var episode in episodes)
+                {
+                    if (episode.PremiereDate.HasValue)
+                    {
                         _logger.LogDebug("Episode [{Name} - {Date:MM/dd/yyyy}] should now be index {Index}", episode.Name, episode.PremiereDate, eindex);
                     }
-                    else {
+                    else
+                    {
                         _logger.LogDebug("Episode {Name} should now be index {Index}", episode.Name, eindex);
                     }
                     episode.IndexNumber = eindex;

@@ -1,8 +1,8 @@
 {
-  "profiles": {
-	"YoutubeMetadata2YoutubeHorder": {
-	  "commandName": "Executable",
-	  "executablePath": "C:\\dev\\Jellyfin\\jellyfin.exe"
+	"profiles": {
+		"YoutubeMetadata2YoutubeHorder": {
+			"commandName": "Executable",
+			"executablePath": "C:\\dev\\Jellyfin\\jellyfin.exe"
+		}
 	}
-  }
 }
