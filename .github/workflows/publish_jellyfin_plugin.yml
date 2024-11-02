@@ -13,7 +13,7 @@ env:
   CSPROJ_NAME: Jellyfin.Plugin.YoutubeMetadata
   PLUGIN_GUID: e1204173-3802-4d53-980e-9d1b851fde84
   REPO_URL: https://github.com/JMiles42/jellyfin-youtube-metadata-plugin
-  TARGET_ABI: "10.9.0.0"
+  TARGET_ABI: "10.10.0.0"
 
 jobs:
   build:
