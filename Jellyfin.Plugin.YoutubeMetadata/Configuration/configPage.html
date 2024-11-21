@@ -13,9 +13,65 @@
         </div>
         <div data-role="content">
             <div class="content-primary">
+                <form class="youtubePluginConfigurationPageForm">
+                    <div class="checkboxContainer checkboxContainer-withDescription">
+                        <label>
+                            <input is="emby-checkbox" type="checkbox" id="EnableDownloadingMetadata" />
+                            <span>Enable running YTDLP to download the latest metadata</span>
+                        </label>
+                        <div class="fieldDescription">Enable running YTDLP to download the latest metadata.</div>
+                    </div>
+
+                    <br />
+                    <div>
+                        <button is="emby-button" type="submit" class="raised button-submit block emby-button">
+                            <span>Save</span>
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
+
+        <script type="text/javascript">
+    (function () {
+
+        var pluginId = "e1204173-3802-4d53-980e-9d1b851fde84";
+
+        $('.pluginConfigurationPage')
+            .on('pageshow', function (event) {
+            var page = this;
+
+            Dashboard.showLoadingMsg();
+
+            ApiClient.getPluginConfiguration(pluginId).then(function (config) {
+                page.querySelector('#EnableDownloadingMetadata').checked = config.EnableDownloadingMetadata;
+
+                Dashboard.hideLoadingMsg();
+            });
+        });
+
+        $('.pluginConfigurationPage')
+            .off('submit.plugin')
+            .on('submit.plugin', function (e) {
+
+            Dashboard.showLoadingMsg();
+
+            var form = this;
+
+            ApiClient.getPluginConfiguration(pluginId).then(function (config) {
+                config.EnableDownloadingMetadata = form.querySelector('#EnableDownloadingMetadata').checked;
+
+                ApiClient.updatePluginConfiguration(pluginId, config)
+                    .then(Dashboard.processPluginConfigurationUpdateResult);
+            });
+
+            return false;
+        });
+
+    })();
+
+        </script>
     </div>
-    
+
 </body>
 </html>

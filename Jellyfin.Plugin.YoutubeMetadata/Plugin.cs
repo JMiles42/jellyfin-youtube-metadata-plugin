@@ -17,6 +17,7 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
     public override Guid Id => Guid.Parse(Constants.PluginGuid);
 
     private readonly IHttpClientFactory _httpClientFactory;
+
     public Plugin(IApplicationPaths applicationPaths, IXmlSerializer xmlSerializer, IHttpClientFactory httpClientFactory) : base(applicationPaths, xmlSerializer)
     {
         Instance = this;

@@ -131,7 +131,7 @@ public abstract class AbstractYoutubeRemoteProvider<B, T, E> : IRemoteMetadataPr
 
         if (string.IsNullOrWhiteSpace(id))
         {
-            _logger.LogInformation("YTDL GetMetadata: Youtube ID not found in filename of title: {info.Name}", info.Name);
+            _logger.LogInformation("YTDL GetMetadata: Youtube ID not found in filename of title: {InfoName}", info.Name);
             result.HasMetadata = false;
             return result;
         }
