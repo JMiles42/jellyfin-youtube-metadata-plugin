@@ -151,6 +151,7 @@ public abstract class AbstractYoutubeRemoteProvider<B, T, E> : IRemoteMetadataPr
         }
         return result;
     }
+
     public Task<IEnumerable<RemoteSearchResult>> GetSearchResults(E searchInfo, CancellationToken cancellationToken)
     {
         throw new System.NotImplementedException();
