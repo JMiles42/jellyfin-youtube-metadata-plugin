@@ -90,6 +90,11 @@ public static class Utils
     public static async Task<string?> SearchChannel(string query, IServerApplicationPaths appPaths,
         CancellationToken cancellationToken)
     {
+        if (!Plugin.Instance.Configuration.EnableDownloadingMetadata)
+        {
+            return null;
+        }
+
         cancellationToken.ThrowIfCancellationRequested();
         var ytd = new YoutubeDLP();
         var url = string.Format(Constants.SearchQuery, System.Web.HttpUtility.UrlEncode(query));
@@ -119,6 +124,11 @@ public static class Utils
 
     public static async Task<bool> ValidCookie(IServerApplicationPaths appPaths, CancellationToken cancellationToken)
     {
+        if (!Plugin.Instance.Configuration.EnableDownloadingMetadata)
+        {
+            return false;
+        }
+
         cancellationToken.ThrowIfCancellationRequested();
         var ytd = new YoutubeDLP();
         var task = ytd.DownloadAsync("https://www.youtube.com/playlist?list=WL");
@@ -149,6 +159,11 @@ public static class Utils
     public static async Task GetChannelInfo(string id, string name, IServerApplicationPaths appPaths,
         CancellationToken cancellationToken)
     {
+        if (!Plugin.Instance.Configuration.EnableDownloadingMetadata)
+        {
+            return;
+        }
+
         cancellationToken.ThrowIfCancellationRequested();
         var ytd = new YoutubeDLP();
         ytd.Options.VideoSelectionOptions.PlaylistItems = "0";
@@ -170,6 +185,11 @@ public static class Utils
     public static async Task YTDLMetadata(string id, IServerApplicationPaths appPaths,
         CancellationToken cancellationToken)
     {
+        if (!Plugin.Instance.Configuration.EnableDownloadingMetadata)
+        {
+            return;
+        }
+
         //var foo = await ValidCookie(appPaths, cancellationToken);
         cancellationToken.ThrowIfCancellationRequested();
         var ytd = new YoutubeDLP();
