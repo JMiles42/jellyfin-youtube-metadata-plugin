@@ -1,7 +1,7 @@
 ---
 name: "YouTube Metadata 2 YouTube Horder"
 guid: "e1204173-3802-4d53-980e-9d1b851fde84"
-version: "1.3.1.0"
+version: "1.3.2.0"
 targetAbi: "10.10.0.0"
 framework: "net8.0"
 owner: "JMiles42"
