@@ -14,6 +14,15 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{
 		.github\workflows\publish_jellyfin_plugin.yml = .github\workflows\publish_jellyfin_plugin.yml
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{3B9909DF-C6B3-41FA-BCED-1DA03DA94E4D}"
+	ProjectSection(SolutionItems) = preProject
+		.gitignore = .gitignore
+		build.yaml = build.yaml
+		build_plugin.sh = build_plugin.sh
+		LICENSE = LICENSE
+		README.md = README.md
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
