@@ -7,18 +7,13 @@ namespace Jellyfin.Plugin.YoutubeMetadata.Providers.ExternalId;
 
 public class YTSeriesExternalId : IExternalId
 {
-    public bool Supports(IHasProviderIds item)
-        => item is Series;
+    public bool Supports(IHasProviderIds item) => item is Series;
 
-    public string ProviderName
-        => Constants.ProviderId;
+    public string ProviderName => Constants.ProviderId;
 
-    public string Key
-        => Constants.ProviderId;
+    public string Key => Constants.ProviderId;
 
-    public ExternalIdMediaType? Type
-        => null;
+    public ExternalIdMediaType? Type => null;
 
-    public string UrlFormatString
-        => Constants.ChannelUrl;
+    public string UrlFormatString => Constants.ChannelUrl;
 }

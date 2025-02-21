@@ -7,6 +7,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Jellyfin.Plugin.YoutubeMeta
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Jellyfin.Plugin.YoutubeMetadata.UnitTests", "Jellyfin.Plugin.YoutubeMetadata.Providers.Tests\Jellyfin.Plugin.YoutubeMetadata.UnitTests.csproj", "{D0F6505D-20CB-4657-BDE7-1C269526C5BF}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{C0B01B65-3776-4D39-A35E-15BAE5C56C5B}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{76BC37A5-FC9D-4139-AE58-E86F059F4FE6}"
+	ProjectSection(SolutionItems) = preProject
+		.github\workflows\publish_jellyfin_plugin.yml = .github\workflows\publish_jellyfin_plugin.yml
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,6 +31,9 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{76BC37A5-FC9D-4139-AE58-E86F059F4FE6} = {C0B01B65-3776-4D39-A35E-15BAE5C56C5B}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {5073F749-15A8-4963-899A-33AA8D1781B5}

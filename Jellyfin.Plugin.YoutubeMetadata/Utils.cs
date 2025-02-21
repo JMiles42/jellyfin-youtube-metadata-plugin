@@ -90,7 +90,7 @@ public static class Utils
     public static async Task<string?> SearchChannel(string query, IServerApplicationPaths appPaths,
         CancellationToken cancellationToken)
     {
-        if (!Plugin.Instance.Configuration.EnableDownloadingMetadata)
+        if (Plugin.Instance.Configuration.EnableDownloadingMetadata is false)
         {
             return null;
         }
@@ -124,7 +124,7 @@ public static class Utils
 
     public static async Task<bool> ValidCookie(IServerApplicationPaths appPaths, CancellationToken cancellationToken)
     {
-        if (!Plugin.Instance.Configuration.EnableDownloadingMetadata)
+        if (Plugin.Instance.Configuration.EnableDownloadingMetadata is false)
         {
             return false;
         }
@@ -159,7 +159,7 @@ public static class Utils
     public static async Task GetChannelInfo(string id, string name, IServerApplicationPaths appPaths,
         CancellationToken cancellationToken)
     {
-        if (!Plugin.Instance.Configuration.EnableDownloadingMetadata)
+        if (Plugin.Instance.Configuration.EnableDownloadingMetadata is false)
         {
             return;
         }
@@ -185,7 +185,7 @@ public static class Utils
     public static async Task YTDLMetadata(string id, IServerApplicationPaths appPaths,
         CancellationToken cancellationToken)
     {
-        if (!Plugin.Instance.Configuration.EnableDownloadingMetadata)
+        if (Plugin.Instance.Configuration.EnableDownloadingMetadata is false)
         {
             return;
         }
@@ -217,7 +217,7 @@ public static class Utils
     /// <param name="metaFile"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    public static YTDLData ReadYTDLInfo(string fpath, CancellationToken cancellationToken)
+    public static YTDLData? ReadYTDLInfo(string fpath, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
         var jsonString = File.ReadAllText(fpath);

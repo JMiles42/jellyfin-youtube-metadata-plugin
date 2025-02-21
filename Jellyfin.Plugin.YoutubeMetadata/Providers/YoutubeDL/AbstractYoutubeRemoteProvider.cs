@@ -78,12 +78,19 @@ public abstract class AbstractYoutubeRemoteProvider<B, T, E> : IRemoteMetadataPr
         result.Item.TrySetProviderId(Constants.ProviderId, id);
         return result;
     }
+
     public static bool IsFresh(MediaBrowser.Model.IO.FileSystemMetadata fileInfo)
     {
-        if (fileInfo.Exists && DateTime.UtcNow.Subtract(fileInfo.LastWriteTimeUtc).Days <= 10)
+		if (Plugin.Instance.Configuration.EnableDownloadingMetadata is false)
+		{
+			return true;
+		}
+
+		if (fileInfo.Exists && DateTime.UtcNow.Subtract(fileInfo.LastWriteTimeUtc).Days <= 10)
         {
             return true;
         }
+
         return false;
     }
     /// <summary>
@@ -114,10 +121,20 @@ public abstract class AbstractYoutubeRemoteProvider<B, T, E> : IRemoteMetadataPr
     /// <param name="metaFile"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    public YTDLData ReadYTDLInfo(string fpath, CancellationToken cancellationToken)
+    public YTDLData? ReadYTDLInfo(string fpath, CancellationToken cancellationToken)
     {
+		if (Plugin.Instance.Configuration.EnableDownloadingMetadata is false) {
+			return null;
+		}
+
         _logger.LogDebug("YTDL ReadYTDLInfo: {Path}", fpath);
         cancellationToken.ThrowIfCancellationRequested();
+        if(_afs.File.Exists(fpath) is false)
+        {
+            _logger.LogDebug("YTDL ReadYTDLInfo: File does not exist: {Path}", fpath);
+            return null;
+        }
+
         var jsonString = _afs.File.ReadAllText(fpath);
         var json = JsonSerializer.Deserialize<YTDLData>(jsonString);
         return json;
@@ -144,7 +161,7 @@ public abstract class AbstractYoutubeRemoteProvider<B, T, E> : IRemoteMetadataPr
             await this.GetAndCacheMetadata(id, this._config.ApplicationPaths, cancellationToken);
         }
         var video = ReadYTDLInfo(ytPath, cancellationToken);
-        if (video != null)
+        if (video is not null)
         {
             _logger.LogDebug("YTDL GetMetadata: Calling Impl function: {ID}", id);
             result = this.GetMetadataImpl(video, id);

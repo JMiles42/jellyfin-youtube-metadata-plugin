@@ -68,14 +68,14 @@ public class YTDLImageProvider : IRemoteImageProvider, IHasOrder
         }
         var ytPath = Utils.GetVideoInfoPath(_config.ApplicationPaths, id);
         var fileInfo = _fileSystem.GetFileSystemInfo(ytPath);
-        if (!(Utils.IsFresh(fileInfo)))
+        if (Utils.IsFresh(fileInfo) is false)
         {
             _logger.LogDebug("YTDLImage GetImages: {item.Name} is not fresh.", item.Name);
             await Utils.YTDLMetadata(id, _config.ApplicationPaths, cancellationToken);
         }
         var path = Utils.GetVideoInfoPath(_config.ApplicationPaths, id);
         var video = Utils.ReadYTDLInfo(path, cancellationToken);
-        if (video != null)
+        if (video is not null)
         {
             _logger.LogDebug("YTDLImage GetImages: Creating RemoteImageInfo for {ID}", id);
             result.Add(new RemoteImageInfo
