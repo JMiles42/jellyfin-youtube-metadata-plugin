@@ -6,7 +6,7 @@
     "name": "YouTube Metadata 2 YouTube Horder",
     "overview": "YouTube metadata provider",
     "owner": "JMiles42",
-    "targetAbi": "10.10.0.0",
+    "targetAbi": "10.11.0.0",
     "timestamp": "2024-11-03T03:53:44Z",
-    "version": "1.3.1.0"
+    "version": "1.4.0.1"
 }
